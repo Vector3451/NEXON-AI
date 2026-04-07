@@ -1,0 +1,12 @@
+version = 1
+requires-python = ">=3.10"
+
+[[package]]
+name = "nexus-ai"
+version = "1.0.0"
+source = { editable = "." }
+
+[[package]]
+name = "openenv-core"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }

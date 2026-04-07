@@ -81,7 +81,7 @@ async def simulation_loop():
 from typing import Optional, Dict, Any
 
 class ResetRequest(BaseModel):
-    task: str = "software-incident"
+    task: Optional[str] = "software-incident"
     custom_scenario: Optional[Dict[str, Any]] = None
     seed: Optional[int] = None
     max_steps: Optional[int] = None

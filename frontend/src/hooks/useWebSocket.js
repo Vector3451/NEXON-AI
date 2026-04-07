@@ -138,8 +138,17 @@ const useWebSocket = (url) => {
                     draft.status = 'COMPLETED';
                     draft.step = data.steps_taken || draft.step;
                     draft.cumulativeReward = data.final_score !== undefined ? data.final_score : draft.cumulativeReward;
+                    draft.finalScore = data.final_score;
+                    draft.success = data.success;
+                    draft.fixVerified = data.fix_verified;
                     if (data.clues_found) {
                         draft.clues_found = data.clues_found;
+                    }
+                    if (data.reward_history) {
+                        draft.rewardHistory = data.reward_history;
+                    }
+                    if (data.final_breakdown) {
+                        draft.rewardBreakdown = data.final_breakdown;
                     }
                     draft.agents.agent_a.status = 'STANDBY';
                     draft.agents.agent_b.status = 'STANDBY';

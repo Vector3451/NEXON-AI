@@ -19,8 +19,27 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
         report += `Title:           ${sc.id || 'N/A'}\n`;
         report += `Domain:          ${sc.domain || 'N/A'}\n`;
         report += `Difficulty:      ${sc.difficulty || 'N/A'}\n`;
-        report += `Final Score:     ${metrics?.score || 'N/A'}\n`;
-        report += `Total Steps:     ${metrics?.steps || 'N/A'}\n\n`;
+        report += `Final Grading Score: ${Number(gameState?.cumulativeReward || metrics?.score || 0).toFixed(4)} / 1.00\n`;
+        report += `Total Steps:     ${gameState?.step || metrics?.steps || 'N/A'}\n\n`;
+        
+        report += `[ STEP REWARDS ]\n`;
+        if (gameState?.rewardHistory && gameState.rewardHistory.length > 0) {
+            gameState.rewardHistory.forEach((r, i) => {
+                report += `Step ${i + 1}: ${r.toFixed(4)}\n`;
+            });
+            report += `Average: ${(gameState.rewardHistory.reduce((a, b) => a + b, 0) / gameState.rewardHistory.length).toFixed(4)}\n`;
+            report += `Final Grading Score: ${Number(gameState.cumulativeReward || 0).toFixed(4)}\n\n`;
+        } else {
+            report += `No step rewards recorded.\n\n`;
+        }
+        
+        report += `[ REWARD BREAKDOWN ]\n`;
+        if (gameState?.rewardBreakdown && Object.keys(gameState.rewardBreakdown).length > 0) {
+            Object.entries(gameState.rewardBreakdown).forEach(([key, val]) => {
+                report += `${key}: ${typeof val === 'number' ? val.toFixed(4) : val}\n`;
+            });
+            report += `\n`;
+        }
 
         report += `[ INCIDENT DESCRIPTION & PROBLEM ]\n`;
         report += `${sc.description || 'No description provided.'}\n\n`;
@@ -135,14 +154,50 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
                         {/* Primary Metrics */}
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <span className="font-mono text-[10px] text-outline tracking-widest uppercase">Cumulative Efficiency Score</span>
+                                <span className="font-mono text-[10px] text-outline tracking-widest uppercase">Final Grading Score</span>
                                 <div className="flex items-baseline gap-2">
                                     <span className="font-headline text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-primary to-primary-container drop-shadow-[0_0_15px_rgba(0,212,255,0.3)]">
-                                        {metrics?.score || '—'}
+                                        {Number(gameState?.cumulativeReward || metrics?.score || 0).toFixed(2)}
                                     </span>
-                                    <span className="font-headline text-2xl text-primary/40 font-light">pts</span>
+                                    <span className="font-headline text-2xl text-primary/40 font-light">/ 1.00</span>
                                 </div>
                             </div>
+                            
+                            {/* Reward Breakdown from Episode */}
+                            {gameState?.rewardBreakdown && Object.keys(gameState.rewardBreakdown).length > 0 && (
+                                <div className="p-4 bg-surface-container-lowest/50 border border-white/10 rounded-lg">
+                                    <span className="font-mono text-[10px] text-outline uppercase block mb-3">Step Reward Breakdown</span>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {Object.entries(gameState.rewardBreakdown).map(([key, val]) => (
+                                            <div key={key} className="text-center bg-surface-container-high/30 rounded p-2">
+                                                <div className="text-[8px] text-slate-500 uppercase truncate">{key.replace(/_/g, ' ')}</div>
+                                                <div className={`font-mono text-sm font-bold ${val > 0 ? 'text-primary' : 'text-slate-600'}`}>
+                                                    {typeof val === 'number' ? val.toFixed(3) : val}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Reward History */}
+                            {gameState?.rewardHistory && gameState.rewardHistory.length > 0 && (
+                                <div className="p-4 bg-surface-container-lowest/50 border border-white/10 rounded-lg">
+                                    <span className="font-mono text-[10px] text-outline uppercase block mb-3">Step Rewards</span>
+                                    <div className="flex items-end gap-1 h-16">
+                                        {gameState.rewardHistory.map((r, i) => (
+                                            <div key={i} className="flex-1 bg-primary/60 rounded-t" 
+                                                 style={{ height: `${Math.max(5, (r / 1) * 100)}%` }}
+                                                 title={`Step ${i + 1}: ${r.toFixed(3)}`}>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-between mt-2 text-[9px] font-mono text-slate-500">
+                                        <span>Avg: {(gameState.rewardHistory.reduce((a, b) => a + b, 0) / gameState.rewardHistory.length).toFixed(3)}</span>
+                                        <span>Max: {Math.max(...gameState.rewardHistory).toFixed(3)}</span>
+                                    </div>
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-surface-container-lowest/50 p-4 border-l border-primary/20 refractive-edge">
                                     <span className="font-mono text-[9px] text-outline uppercase block mb-1">Clues Found</span>

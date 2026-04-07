@@ -81,10 +81,11 @@ class EpisodeManager:
                 "success": info.get("success", False),
                 "steps_taken": self.env.active_episode.steps_taken,
                 "final_score": info.get("final_score", getattr(self.env.active_episode, "cumulative_reward", 0)),
+                "final_breakdown": info.get("breakdown", {}),
                 "clues_found": self.env.active_episode.clues_found,
                 "root_cause_found": self.env.active_episode.fix_correct,
                 "fix_verified": self.env.active_episode.fix_verified,
-                "time_taken_seconds": 0, # could track
+                "time_taken_seconds": 0,
                 "reward_history": self.env.active_episode.reward_history
             })
 

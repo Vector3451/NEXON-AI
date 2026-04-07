@@ -11,6 +11,7 @@ from scenarios.graders.hard_grader import HardGrader
 from api.schemas.action import NexusAction
 from api.schemas.observation import NexusObservation, ToolResult
 from config import settings
+import statistics
 
 SIMULATED_TOOLS = ["read_logs", "check_config", "query_database", "check_service_status", "run_diagnostic", "update_config", "restart_service", "propose_fix", "verify_fix", "submit_resolution"]
 SSH_TOOLS = ["run_terminal_command", "propose_fix", "verify_fix", "submit_resolution"]
@@ -115,15 +116,26 @@ class NexusEnvironment:
                     "fix_applied": "No fix was submitted."
                 })
             
-            # Final scoring overrides semantic cumulative reward in openenv inference if grader is used
-            # We compute it here for info
+            # Hybrid Final Scorer: Combine objective grader results with semantic reward history
             grader = self.graders.get(ep.difficulty, self.graders["easy"])
-            final_score = grader.grade(ep, sc)
+            grader_score = grader.grade(ep, sc)
+            
+            # Use average step reward as the semantic component (0.0 - 1.0)
+            avg_semantic = statistics.mean(ep.reward_history) if ep.reward_history else 0.0
+            
+            # Weighted average: Grader (Objective) 60% + Semantic (Quality) 40%
+            # If the grader score is 1.0 (perfect fix), we lean more into the objective truth.
+            if grader_score >= 0.90:
+                final_score = grader_score * 0.8 + avg_semantic * 0.2
+            else:
+                final_score = grader_score * 0.6 + avg_semantic * 0.4
+            
+            final_score = round(max(0.0, min(1.0, final_score)), 4)
             
             info = {
-                "breakdown": breakdown,
+                "breakdown": {**breakdown, "semantic_avg": round(avg_semantic, 4), "objective_score": grader_score},
                 "final_score": final_score,
-                "success": final_score >= settings.SUCCESS_SCORE_THRESHOLD and ep.fix_verified
+                "success": (final_score >= settings.SUCCESS_SCORE_THRESHOLD) or (ep.fix_verified and grader_score > 0)
             }
         else:
             info = {"breakdown": breakdown}

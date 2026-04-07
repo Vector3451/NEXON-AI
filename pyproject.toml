@@ -7,6 +7,7 @@ name = "nexus-ai"
 version = "1.0.0"
 description = "NEXUS - Dual Agent Incident Investigation Environment"
 requires-python = ">=3.10"
+
 dependencies = [
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.23.0",

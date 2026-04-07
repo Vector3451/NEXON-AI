@@ -35,6 +35,9 @@ COPY --chown=user:user backend ./backend
 COPY --chown=user:user default.env ./.env
 COPY --chown=user:user openenv.yaml .
 COPY --chown=user:user inference.py .
+COPY --chown=user:user pyproject.toml .
+COPY --chown=user:user uv.lock .
+COPY --chown=user:user server ./server
 
 # Copy built frontend from stage 1
 COPY --chown=user:user --from=frontend-builder /app/frontend/dist ./frontend/dist
@@ -49,4 +52,4 @@ ENV ENVIRONMENT=production
 ENV PYTHONPATH=$HOME/app:$HOME/app/backend
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python3", "backend/main.py"]
+CMD ["python3", "server/app.py"]

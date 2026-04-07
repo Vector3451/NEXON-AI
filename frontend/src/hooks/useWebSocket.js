@@ -14,7 +14,10 @@ const useWebSocket = (url) => {
         agents: {
             agent_a: { status: 'STANDBY', messages: [] },
             agent_b: { status: 'STANDBY', messages: [] }
-        }
+        },
+        clues_found: [],
+        rewardBreakdown: {},
+        rewardHistory: []
     });
 
     const [isConnected, setIsConnected] = useState(false);
@@ -152,8 +155,9 @@ const useWebSocket = (url) => {
                     // Simple heuristic for clues if not sent explicitly
                     const res = data.result?.toLowerCase() || '';
                     if (res.includes('error') || res.includes('anomaly') || res.includes('warning') || res.includes('degraded') || data.tool_name === 'propose_fix') {
-                        if (!newState.clues_found.includes(data.result)) {
-                            newState.clues_found = [...newState.clues_found, data.result];
+                        const currentClues = newState.clues_found || [];
+                        if (!currentClues.includes(data.result)) {
+                            newState.clues_found = [...currentClues, data.result];
                         }
                     }
                 }

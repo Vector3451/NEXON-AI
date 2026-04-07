@@ -53,6 +53,22 @@
   animation: blink 1s step-end infinite;
 }
 
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-outline-variant);
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--color-outline);
+  }
+}
+
 @layer base {
   body {
     @apply bg-background text-on-surface font-body selection:bg-primary-container/30 overflow-x-hidden;

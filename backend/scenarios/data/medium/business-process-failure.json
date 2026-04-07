@@ -1,0 +1,39 @@
+{
+    "id": "business-process-failure",
+    "title": "Inventory Stockout Loop",
+    "difficulty": "medium",
+    "domain": "E-Commerce",
+    "description": "The inventory service is failing to trigger restocking orders even when stock is zero.",
+    "context": "The inventory logic depends on a minimum stock threshold. A red herring might point to the CDN edge node.",
+    "symptoms": [
+        "Stockouts",
+        "Orders stuck in 'PENDING_STOCK'"
+    ],
+    "available_services": [
+        "inventory-service",
+        "cdn-edge-node",
+        "order-processor"
+    ],
+    "initial_state": {
+        "inventory-service": {
+            "status": "running",
+            "minimum_stock_threshold": "50",
+            "last_reload": "1 day ago"
+        },
+        "cdn-edge-node": {
+            "status": "running",
+            "cache_expiry": "3600s"
+        }
+    },
+    "root_cause": {
+        "service": "inventory-service",
+        "description": "Minimum stock threshold was accidentally hardcoded to a high value, preventing restocking."
+    },
+    "grading_criteria": {
+        "inventory_threshold_fixed": 0.45,
+        "inventory_restarted": 0.10,
+        "penalty_cdn_edge_node_modified": -0.15,
+        "fix_verified": 0.20,
+        "efficiency_bonus": 0.10
+    }
+}

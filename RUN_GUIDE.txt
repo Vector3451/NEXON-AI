@@ -1,0 +1,45 @@
+================================================================================
+NEXUS: DUAL-AGENT INCIDENT INVESTIGATION ENVIRONMENT
+================================================================================
+
+PREREQUISITES:
+--------------
+1. Ollama (https://ollama.com) - For local model inference.
+2. Python 3.10+ - For the FastAPI backend.
+3. Node.js 18+ - For the Vite/React frontend.
+
+1. BACKEND SETUP (Terminal 1):
+------------------------------
+cd /home/habibi/PROJECTS/Scaler/backend
+pip install -r requirements.txt
+# Ensure your .env file has your HF_TOKEN if using Hugging Face
+python main.py
+
+2. FRONTEND SETUP (Terminal 2):
+-------------------------------
+cd /home/habibi/PROJECTS/Scaler/frontend
+npm install
+npm run dev
+
+3. HOW TO USE THE DASHBOARD:
+----------------------------
+1. Open http://localhost:5173 in your browser.
+2. Go to SETTINGS (Gear icon) to verify models or switch to Hugging Face.
+3. Return to DASHBOARD.
+4. Use the "DYNAMIC SCENARIO CONFIGURATOR" (JSON box at bottom) to:
+    a. Enter your custom incident JSON.
+    b. Click "INJECT & RESET".
+5. Click the green "START" button at the top (or "+ START FULL SIMULATION").
+6. Watch the Investigator and Validator agents stream their analysis live!
+
+CONTROLS:
+---------
+- START: Launches/Resumes the auto-simulation loop.
+- PAUSE: Holds the simulation state.
+- RESET: Clears the current episode and returns to standby.
+
+NOTE:
+-----
+All mock data has been deleted to ensure a clean slate. You provide all 
+scenario context via the Dynamic Injector in the dashboard.
+================================================================================

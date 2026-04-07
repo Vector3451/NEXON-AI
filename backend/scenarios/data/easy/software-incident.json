@@ -1,0 +1,33 @@
+{
+    "id": "software-incident",
+    "title": "Nginx Rate Limit Investigation",
+    "difficulty": "easy",
+    "domain": "DevOps",
+    "description": "Users are reporting 503 errors when accessing the main API. Initial reports suggest a misconfigured rate limit.",
+    "context": "The system uses Nginx as a reverse proxy. A recent change might have throttled legitimate traffic.",
+    "symptoms": [
+        "HTTP 503 errors",
+        "High latency for API calls"
+    ],
+    "available_services": [
+        "nginx-proxy",
+        "api-gateway"
+    ],
+    "initial_state": {
+        "nginx-proxy": {
+            "status": "running",
+            "rate_limit": "10",
+            "last_reload": "2 hours ago"
+        }
+    },
+    "root_cause": {
+        "service": "nginx-proxy",
+        "description": "Nginx rate limit was set too low (10 requests/sec) during a maintenance window."
+    },
+    "grading_criteria": {
+        "nginx_rate_limit_fixed": 0.50,
+        "nginx_restarted": 0.20,
+        "fix_verified": 0.20,
+        "efficiency_bonus": 0.10
+    }
+}

@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #a8e8ff;
+  --color-primary-container: #00d4ff;
+  --color-secondary: #ddb7ff;
+  --color-secondary-container: #6f00be;
+  --color-tertiary: #66fa8c;
+  --color-tertiary-container: #45dd73;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-background: #0a0a0f;
+  --color-surface: #131318;
+  --color-surface-container: #1f1f25;
+  --color-surface-container-low: #1b1b20;
+  --color-surface-container-high: #2a292f;
+  --color-surface-container-highest: #35343a;
+  --color-surface-container-lowest: #0e0e13;
+  --color-outline: #859398;
+  --color-outline-variant: #3c494e;
+  --color-on-primary: #003642;
+  --color-on-secondary: #490080;
+  --color-on-tertiary: #003915;
+  --color-on-surface: #e4e1e9;
+  --color-on-surface-variant: #bbc9cf;
+  --color-on-background: #e4e1e9;
+
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-body: Inter, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+}
+
+@utility glass-panel {
+  backdrop-filter: blur(64px);
+  background-color: rgba(19, 19, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@utility refractive-edge {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+@utility text-gradient-primary {
+  background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-container));
+}
+
+@utility cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-body selection:bg-primary-container/30 overflow-x-hidden;
+  }
+}
+
+@keyframes blink {
+
+  from,
+  to {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+:root {
+  color-scheme: dark;
+}

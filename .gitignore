@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/venv/
+.pytest_cache/
+.coverage
+.cache
+backend/scenarios/.cache
+
+# Node
+node_modules/
+.npm/
+
+# Env & Secrets
+.env
+.env.*
+!.env.example
+# default.env is needed for HF Spaces
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+backend/logs/
+*.log
+.gemini/
+brain/

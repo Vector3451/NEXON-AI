@@ -1,0 +1,59 @@
+name: nexus-incident-investigation
+version: "1.0.0"
+tags: ["openenv"]
+description: >
+  NEXUS — Dual Agent Incident Investigation Environment.
+  Two AI agents collaborate to investigate real-world system incidents.
+  Agent A (Investigator) proposes hypotheses and calls tools.
+  Agent B (Validator) challenges claims and verifies fixes.
+  Together they identify root causes across software, business-process,
+  and cascade-system failure scenarios.
+
+tasks:
+  - name: software-incident
+    description: Single-service software bug causing user-facing errors
+    difficulty: easy
+    max_steps: 8
+    grader: scenarios/graders/easy_grader.py
+
+  - name: business-process-failure
+    description: Multi-team process breakdown with misleading red-herrings
+    difficulty: medium
+    max_steps: 8
+    grader: scenarios/graders/medium_grader.py
+
+  - name: cascade-system-failure
+    description: Multi-system cascade failure with misleading logs
+    difficulty: hard
+    max_steps: 8
+    grader: scenarios/graders/hard_grader.py
+
+action_space:
+  type: text
+  description: Free-form natural language message with optional TOOL: calls
+
+observation_space:
+  type: structured
+  fields:
+    scenario_description: string
+    scenario_context: string
+    partner_message: string
+    tool_results: list
+    clues_found: list
+    investigation_stage: string
+    round: integer
+    available_tools: list
+
+reward_range: [0.0, 1.0]
+reward_description: >
+  Dynamically computed from semantic similarity of hypothesis to root-cause,
+  tool quality, fix correctness, and investigation efficiency.
+
+inference_script: inference.py
+entry_point: backend/main.py
+docker_port: 7860
+
+baseline_scores:
+  software-incident: 0.88
+  business-process-failure: 0.72
+  cascade-system-failure: 0.48

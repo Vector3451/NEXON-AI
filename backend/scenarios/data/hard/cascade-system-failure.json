@@ -1,0 +1,42 @@
+{
+    "id": "cascade-system-failure",
+    "title": "Postgres Connection Exhaustion",
+    "difficulty": "hard",
+    "domain": "Database",
+    "description": "A cascade failure is occurring across the cluster. Database connections are being exhausted by a long-running analytics query.",
+    "context": "The analytics service might be the culprit. A red herring points to the disk backup agent.",
+    "symptoms": [
+        "FATAL: too many connections",
+        "Application timeout",
+        "High I/O wait"
+    ],
+    "available_services": [
+        "postgres-db",
+        "disk-backup-agent",
+        "analytics-service"
+    ],
+    "initial_state": {
+        "postgres-db": {
+            "status": "running",
+            "max_connections": "20",
+            "long_running_query": "SELECT * FROM large_audit_table CROSS JOIN high_res_metrics",
+            "query_timeout_analytics": "0"
+        },
+        "disk-backup-agent": {
+            "status": "degraded",
+            "disk_scan_active": "true"
+        }
+    },
+    "root_cause": {
+        "service": "postgres-db",
+        "description": "A cross-join query in the analytics service is locking connections, coupled with a low max_connections limit."
+    },
+    "grading_criteria": {
+        "postgres_query_terminated": 0.25,
+        "postgres_max_connections_increased": 0.20,
+        "postgres_query_timeout_set": 0.20,
+        "penalty_disk_backup_agent_modified": -0.15,
+        "fix_verified": 0.10,
+        "efficiency_bonus": 0.05
+    }
+}

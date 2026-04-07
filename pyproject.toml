@@ -15,6 +15,7 @@ dependencies = [
     "httpx>=0.24.0",
     "openai>=1.0.0",
     "psutil>=5.9.0",
+    "openenv-core>=0.2.0",
 ]
 
 [project.scripts]

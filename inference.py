@@ -25,13 +25,12 @@ load_dotenv(ROOT / "default.env", override=False)
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "meta-llama/Llama-3.1-8B-Instruct")
-HF_TOKEN = os.getenv("HF_TOKEN")
+HF_TOKEN = os.getenv("HF_TOKEN", "")
 
-# Fallbacks to ensure os.environ has the keys before we strictly read them
-if "API_BASE_URL" not in os.environ:
+if "API_BASE_URL" not in os.environ or not os.environ["API_BASE_URL"]:
     os.environ["API_BASE_URL"] = API_BASE_URL
-if "API_KEY" not in os.environ:
-    os.environ["API_KEY"] = HF_TOKEN or "none"
+if "API_KEY" not in os.environ or not os.environ["API_KEY"]:
+    os.environ["API_KEY"] = "none"
 
 # The client should NOT be initialized here at the module level.
 # If the evaluator imports this file before patching os.environ, it will permanently bind to fallbacks.

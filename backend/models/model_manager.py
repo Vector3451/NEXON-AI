@@ -17,10 +17,12 @@ class ModelManager:
             self.hf_client = HFClient(settings.HF_INFERENCE_URL, hf_token)
             
     def get_client(self, agent_id: str) -> Tuple[AsyncOpenAI, str]:
-        if "API_BASE_URL" in os.environ and "API_KEY" in os.environ:
+        api_base = os.environ.get("API_BASE_URL", "")
+        api_key = os.environ.get("API_KEY", "")
+        if api_base and api_key:
             client = AsyncOpenAI(
-                base_url=os.environ["API_BASE_URL"],
-                api_key=os.environ["API_KEY"]
+                base_url=api_base,
+                api_key=api_key
             )
             model_name = os.environ.get("MODEL_NAME", "")
             if agent_id == "agent_a":

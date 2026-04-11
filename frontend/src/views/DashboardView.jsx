@@ -224,8 +224,8 @@ const DashboardView = () => {
                     const isPrimary = index % 2 === 0;
                     const accentColor = isPrimary ? 'cyan' : 'purple';
                     // We don't have agent specific status tracked deeply beyond STANDBY/ACTIVE globally right now
-                    // We deduce messages from state.messages_by_agent
-                    const messages = state.messages_by_agent?.[agent.id] || [];
+                    // We deduce messages from state.agents
+                    const messages = state.agents?.[agent.id]?.messages || [];
                     const agentStatus = state.active ? 'ACTIVE' : 'STANDBY';
                     const icon = agent.role.includes('VALIDATOR') ? 'verified_user' : 'search';
 

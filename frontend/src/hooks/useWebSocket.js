@@ -11,10 +11,7 @@ const useWebSocket = (url) => {
         cumulativeReward: 0,
         agent_a_model: '',
         agent_b_model: '',
-        agents: {
-            agent_a: { status: 'STANDBY', messages: [] },
-            agent_b: { status: 'STANDBY', messages: [] }
-        },
+        agents: {},
         clues_found: [],
         rewardBreakdown: {},
         rewardHistory: []
@@ -37,6 +34,12 @@ const useWebSocket = (url) => {
                 let current = { ...prev };
 
                 if (data.type === 'episode_start') {
+                    const initialAgents = {};
+                    if (data.agents && Array.isArray(data.agents)) {
+                        data.agents.forEach(a => {
+                            initialAgents[a.id] = { status: 'ACTIVE', messages: [] };
+                        });
+                    }
                     return {
                         ...current,
                         scenario: data.scenario,
@@ -46,12 +49,7 @@ const useWebSocket = (url) => {
                         reward: 0,
                         cumulativeReward: 0,
                         clues_found: [],
-                        agent_a_model: data.agent_a_model || current.agent_a_model,
-                        agent_b_model: data.agent_b_model || current.agent_b_model,
-                        agents: {
-                            agent_a: { status: 'ACTIVE', messages: [] },
-                            agent_b: { status: 'ACTIVE', messages: [] }
-                        }
+                        agents: initialAgents
                     };
                 }
 
@@ -64,10 +62,9 @@ const useWebSocket = (url) => {
                 if (data.type === 'agent_partial') {
                     const agentId = data.agent_id;
                     const agents = { ...newState.agents };
-                    const agentReference = agents[agentId];
-                    if (agentReference) {
-                        const agent = { ...agentReference };
-                        const messages = [...(agent.messages || [])];
+                    const agentReference = agents[agentId] || { status: 'ACTIVE', messages: [] };
+                    const agent = { ...agentReference };
+                    const messages = [...(agent.messages || [])];
                         const lastMsg = messages[messages.length - 1];
                         if (lastMsg && lastMsg.type === 'message' && lastMsg.partial) {
                             messages[messages.length - 1] = { ...lastMsg, content: data.full_message };
@@ -78,19 +75,17 @@ const useWebSocket = (url) => {
                                 partial: true
                             });
                         }
-                        agent.messages = messages;
-                        agents[agentId] = agent;
-                        newState.agents = agents;
-                    }
+                    agent.messages = messages;
+                    agents[agentId] = agent;
+                    newState.agents = agents;
                 }
 
                 if (data.type === 'agent_message') {
                     const agentId = data.agent_id;
                     const agents = { ...newState.agents };
-                    const agentReference = agents[agentId];
-                    if (agentReference) {
-                        const agent = { ...agentReference };
-                        const messages = [...(agent.messages || [])];
+                    const agentReference = agents[agentId] || { status: 'ACTIVE', messages: [] };
+                    const agent = { ...agentReference };
+                    const messages = [...(agent.messages || [])];
                         const lastMsg = messages[messages.length - 1];
                         if (lastMsg && lastMsg.partial) {
                             messages[messages.length - 1] = { ...lastMsg, content: data.message, partial: undefined };
@@ -100,19 +95,19 @@ const useWebSocket = (url) => {
                                 content: data.message
                             });
                         }
-                        agent.messages = messages;
-                        agents[agentId] = agent;
-                        newState.agents = agents;
-                    }
+                    agent.messages = messages;
+                    agents[agentId] = agent;
+                    newState.agents = agents;
                 }
 
                 if (data.status === 'READY') {
                     newState.status = 'READY_TO_INJECT';
                     newState.active = false;
-                    newState.agents = {
-                        agent_a: { ...newState.agents.agent_a, messages: [] },
-                        agent_b: { ...newState.agents.agent_b, messages: [] }
-                    };
+                    const clearedAgents = {};
+                    Object.keys(newState.agents).forEach(k => {
+                        clearedAgents[k] = { ...newState.agents[k], messages: [] };
+                    });
+                    newState.agents = clearedAgents;
                 }
 
                 if (data.type === 'system_status') {
@@ -130,31 +125,34 @@ const useWebSocket = (url) => {
                 if (data.type === 'tool_call') {
                     const agentId = data.agent_id;
                     const agents = { ...newState.agents };
-                    if (agents[agentId]) {
-                        const agent = { ...agents[agentId], messages: [...(agents[agentId].messages || [])] };
-                        agent.messages.push({
-                            type: 'tool_call',
-                            tool_name: data.tool_name,
-                            params: data.params
-                        });
-                        agents[agentId] = agent;
-                        newState.agents = agents;
-                    }
+                    const agent = { ...agents[agentId], messages: [...(agents[agentId].messages || [])] };
+                    agent.messages.push({
+                        type: 'tool_call',
+                        tool_name: data.tool_name,
+                        params: data.params
+                    });
+                    agents[agentId] = agent;
+                    newState.agents = agents;
                 }
 
                 if (data.type === 'tool_result') {
                     const agents = { ...newState.agents };
-                    const agentAReference = agents.agent_a;
-                    if (agentAReference) {
-                        const agentA = { ...agentAReference, messages: [...(agentAReference.messages || [])] };
-                        agentA.messages.push({
-                            type: 'tool_result',
-                            tool_name: data.tool_name,
-                            result: data.result,
-                            success: data.success
-                        });
-                        agents.agent_a = agentA;
-                        newState.agents = agents;
+                    const agentIds = Object.keys(agents);
+                    if (agentIds.length > 0) {
+                        // Attach tool result to the most recently active agent. Or just broadcast to all/first since tool_result lacks agent_id
+                        // We will append to all agents or the first one just for display parsing.
+                        const activeId = data.agent_id || agentIds[0];
+                        if (agents[activeId]) {
+                            const agentTarget = { ...agents[activeId], messages: [...(agents[activeId].messages || [])] };
+                            agentTarget.messages.push({
+                                type: 'tool_result',
+                                tool_name: data.tool_name,
+                                result: data.result,
+                                success: data.success
+                            });
+                            agents[activeId] = agentTarget;
+                            newState.agents = agents;
+                        }
                     }
 
                     // Simple heuristic for clues if not sent explicitly
@@ -186,10 +184,11 @@ const useWebSocket = (url) => {
                     if (data.reward_history) newState.rewardHistory = data.reward_history;
                     if (data.final_breakdown) newState.rewardBreakdown = data.final_breakdown;
 
-                    newState.agents = {
-                        agent_a: { ...newState.agents.agent_a, status: 'STANDBY' },
-                        agent_b: { ...newState.agents.agent_b, status: 'STANDBY' }
-                    };
+                    const standbyAgents = {};
+                    Object.keys(newState.agents).forEach(k => {
+                        standbyAgents[k] = { ...newState.agents[k], status: 'STANDBY' };
+                    });
+                    newState.agents = standbyAgents;
                 }
 
                 return newState;

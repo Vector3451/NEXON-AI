@@ -292,19 +292,32 @@ const SettingsView = () => {
         setAgents(prev => prev.filter((_, i) => i !== index));
     };
 
-    const ProviderToggle = ({ agent, index }) => (
-        <div className="flex gap-2 p-1 bg-surface-container-highest rounded-lg border border-white/5">
-            {['ollama', 'hf', 'openai'].map(p => (
-                <button
-                    key={p}
-                    onClick={() => handleUpdateAgent(index, a => ({ ...a, provider: p }))}
-                    className={`flex-1 py-1 px-3 rounded text-[10px] font-mono font-bold uppercase transition-all ${agent.provider === p ? (index % 2 === 0 ? 'bg-primary text-black' : 'bg-secondary text-black') : 'text-outline-variant hover:text-white'}`}
-                >
-                    {p === 'ollama' ? 'Local Ollama' : (p === 'hf' ? 'Hugging Face' : 'OpenAI')}
-                </button>
-            ))}
-        </div>
-    );
+    const ProviderToggle = ({ agent, index }) => {
+        const getButtonClass = (p) => {
+            if (agent.provider === p) {
+                return index % 2 === 0 ? 'flex-1 py-1 px-3 rounded text-[10px] font-mono font-bold uppercase transition-all bg-primary text-black' : 'flex-1 py-1 px-3 rounded text-[10px] font-mono font-bold uppercase transition-all bg-secondary text-black';
+            }
+            return 'flex-1 py-1 px-3 rounded text-[10px] font-mono font-bold uppercase transition-all text-outline-variant hover:text-white';
+        };
+        const getProviderLabel = (p) => {
+            if (p === 'ollama') return 'Local Ollama';
+            if (p === 'hf') return 'Hugging Face';
+            return 'OpenAI';
+        };
+        return (
+            <div className="flex gap-2 p-1 bg-surface-container-highest rounded-lg border border-white/5">
+                {['ollama', 'hf', 'openai'].map(p => (
+                    <button
+                        key={p}
+                        onClick={() => handleUpdateAgent(index, a => ({ ...a, provider: p }))}
+                        className={getButtonClass(p)}
+                    >
+                        {getProviderLabel(p)}
+                    </button>
+                ))}
+            </div>
+        );
+    };
 
     return (
         <div className="space-y-12 animate-in fade-in duration-500">
@@ -323,14 +336,9 @@ const SettingsView = () => {
                 </div>
             </section>
 
-            <div className="md:col-span-12">
-                <div className="flex items-center gap-3 mb-4">
-                    <span className="font-mono text-[10px] tracking-widest text-primary uppercase">Active_Agent_Nodes</span>
-                    <div className="flex-1 h-px bg-primary/10"></div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch max-h-[1200px] overflow-y-auto pr-2 custom-scrollbar p-1">
-                    {/* N-Agents Render */}
-                    {agents.map((agent, index) => {
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+                {/* N-Agents Render */}
+                {agents.map((agent, index) => {
                     const isPrimary = index % 2 === 0;
                     const accentColor = isPrimary ? 'primary' : 'secondary';
                     const titleColor = isPrimary ? 'text-primary' : 'text-secondary';
@@ -378,7 +386,7 @@ const SettingsView = () => {
                                         <div className="space-y-2">
                                             <label className="font-mono text-[10px] tracking-widest text-slate-400 uppercase">OpenAI API Key</label>
                                             <input
-                                                className={`w-full bg-transparent border-0 border-b border-${accentColor}/30 py-2 font-mono text-on-surface focus:outline-none focus:border-${accentColor} transition-all placeholder:text-slate-700`}
+                                                className={isPrimary ? 'w-full bg-transparent border-0 border-b border-primary/30 py-2 font-mono text-on-surface focus:outline-none focus:border-primary transition-all placeholder:text-slate-700' : 'w-full bg-transparent border-0 border-b border-secondary/30 py-2 font-mono text-on-surface focus:outline-none focus:border-secondary transition-all placeholder:text-slate-700'}
                                                 placeholder="sk-..."
                                                 type="password"
                                                 value={openaiKey}
@@ -388,7 +396,7 @@ const SettingsView = () => {
                                         <div className="space-y-2">
                                             <label className="font-mono text-[10px] tracking-widest text-slate-400 uppercase">OpenAI Model Name</label>
                                             <input
-                                                className={`w-full bg-transparent border-0 border-b border-${accentColor}/30 py-2 font-mono text-on-surface focus:outline-none focus:border-${accentColor} transition-all placeholder:text-slate-700`}
+                                                className={isPrimary ? 'w-full bg-transparent border-0 border-b border-primary/30 py-2 font-mono text-on-surface focus:outline-none focus:border-primary transition-all placeholder:text-slate-700' : 'w-full bg-transparent border-0 border-b border-secondary/30 py-2 font-mono text-on-surface focus:outline-none focus:border-secondary transition-all placeholder:text-slate-700'}
                                                 placeholder="gpt-4o"
                                                 type="text"
                                                 value={agent.openaiModel}
@@ -403,7 +411,7 @@ const SettingsView = () => {
                                         <span className={`font-mono text-xs ${titleColor} font-bold`}>{agent.temp.toFixed(1)}</span>
                                     </div>
                                     <input
-                                        className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer accent-${accentColor} bg-surface-container-highest`}
+                                        className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-surface-container-highest"
                                         max="1" min="0" step="0.1" type="range"
                                         value={agent.temp}
                                         onChange={e => handleUpdateAgent(index, a => ({ ...a, temp: parseFloat(e.target.value) }))}
@@ -412,7 +420,7 @@ const SettingsView = () => {
                                 <div className="space-y-4 pt-4 border-t border-white/5">
                                     <label className="font-mono text-[10px] tracking-widest text-slate-400 uppercase">Operational Role</label>
                                     <select
-                                        className={`w-full bg-surface-container-lowest border-b border-${accentColor}/30 py-2 font-mono text-sm text-on-surface focus:outline-none focus:border-${accentColor} transition-all cursor-pointer`}
+                                        className={isPrimary ? 'w-full bg-surface-container-lowest border-b border-primary/30 py-2 font-mono text-sm text-on-surface focus:outline-none focus:border-primary transition-all cursor-pointer' : 'w-full bg-surface-container-lowest border-b border-secondary/30 py-2 font-mono text-sm text-on-surface focus:outline-none focus:border-secondary transition-all cursor-pointer'}
                                         value={agent.role}
                                         onChange={e => handleUpdateAgent(index, a => ({ ...a, role: e.target.value }))}
                                     >
@@ -428,7 +436,7 @@ const SettingsView = () => {
                                                     placeholder="e.g. DATABASE NINJA"
                                                     value={agent.customRoleName}
                                                     onChange={e => handleUpdateAgent(index, a => ({ ...a, customRoleName: e.target.value }))}
-                                                    className={`w-full bg-transparent border-0 border-b border-${accentColor}/30 py-2 font-mono text-sm text-on-surface focus:outline-none focus:border-${accentColor} transition-all placeholder:text-slate-700`}
+                                                    className={isPrimary ? 'w-full bg-transparent border-0 border-b border-primary/30 py-2 font-mono text-sm text-on-surface focus:outline-none focus:border-primary transition-all placeholder:text-slate-700' : 'w-full bg-transparent border-0 border-b border-secondary/30 py-2 font-mono text-sm text-on-surface focus:outline-none focus:border-secondary transition-all placeholder:text-slate-700'}
                                                 />
                                             </div>
                                             <div className="space-y-2">
@@ -439,7 +447,7 @@ const SettingsView = () => {
                                                     placeholder="You are an elite expert... Your objective is to..."
                                                     value={agent.customPrompt}
                                                     onChange={e => handleUpdateAgent(index, a => ({ ...a, customPrompt: e.target.value }))}
-                                                    className={`w-full h-32 bg-surface-container-lowest ${titleColor} font-mono text-[10px] p-3 rounded border border-white/5 focus:border-${accentColor}/50 focus:outline-none leading-relaxed`}
+                                                    className={`w-full h-32 bg-surface-container-lowest ${titleColor} font-mono text-[10px] p-3 rounded border border-white/5 focus:outline-none leading-relaxed`}
                                                 />
                                             </div>
                                         </div>
@@ -449,15 +457,14 @@ const SettingsView = () => {
                         </div>
                     );
                 })}
-                </div>
-            </div>
-
-            <div className="md:col-span-12 flex justify-center mt-4">
-                <button onClick={addAgent} className="flex items-center gap-2 px-8 py-3 rounded-xl border border-dashed border-outline-variant/30 text-outline-variant font-mono text-xs uppercase hover:bg-surface-container-highest hover:text-white transition-all bg-white/5">
-                    <span className="material-symbols-outlined text-[16px]">add</span>
-                    <span>Add Agent Node</span>
-                </button>
-            </div>
+                {(
+                    <div className="md:col-span-12 flex justify-center mt-4">
+                        <button onClick={addAgent} className="flex items-center gap-2 px-8 py-3 rounded-xl border border-dashed border-outline-variant/30 text-outline-variant font-mono text-xs uppercase hover:bg-surface-container-highest hover:text-white transition-all">
+                            <span className="material-symbols-outlined text-[16px]">add</span>
+                            <span>Add Agent Node</span>
+                        </button>
+                    </div>
+                )}
 
                 {/* Execution Environment */}
                 <div className="md:col-span-12 glass-panel rounded-xl p-8 refractive-edge">
@@ -600,7 +607,7 @@ const SettingsView = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => { 
-                            setAgents([{ id: 'agent_default', provider: 'ollama', model: '', temp: 0.7, role: 'INVESTIGATOR', customRoleName: '', customPrompt: '' }]); 
+                            setAgents([{ id: 'agent_a', provider: 'ollama', model: '', temp: 0.7, role: 'INVESTIGATOR' }]); 
                             setMaxSteps(12); 
                         }}
                         className="px-8 py-3 bg-surface-container-high text-on-surface-variant font-headline font-bold text-sm tracking-widest rounded hover:bg-surface-container-highest hover:text-white transition-all uppercase"

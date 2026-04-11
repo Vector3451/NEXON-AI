@@ -124,13 +124,19 @@ class NexusEnvironment:
             avg_semantic = statistics.mean(ep.reward_history) if ep.reward_history else 0.0
             
             # Weighted average: Grader (Objective) 60% + Semantic (Quality) 40%
-            # If the grader score is 1.0 (perfect fix), we lean more into the objective truth.
+            # If the grader score is 0.9 or higher, we lean more into the objective truth.
             if grader_score >= 0.90:
                 final_score = grader_score * 0.8 + avg_semantic * 0.2
             else:
                 final_score = grader_score * 0.6 + avg_semantic * 0.4
             
-            final_score = round(max(0.0, min(1.0, final_score)), 4)
+            # Clamp to strictly between 0 and 1
+            if final_score <= 0.0:
+                final_score = 0.001
+            elif final_score >= 1.0:
+                final_score = 0.999
+            else:
+                final_score = round(final_score, 4)
             
             info = {
                 "breakdown": {**breakdown, "semantic_avg": round(avg_semantic, 4), "objective_score": grader_score},

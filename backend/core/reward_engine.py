@@ -158,7 +158,13 @@ def compute_reward(message: str, tool_calls: list, tool_results: list, episode_s
         penalty += 0.15 # Attempting to end investigation without a proven fix
 
     total = sum(breakdown.values()) - penalty
-    final_score = round(max(0.0, min(1.0, total)), 4)
+    # Clamp to strictly between 0 and 1
+    if total <= 0.0:
+        final_score = 0.001
+    elif total >= 1.0:
+        final_score = 0.999
+    else:
+        final_score = round(total, 4)
 
     ep.reward_history.append(final_score)
     ep.cumulative_reward = round(ep.cumulative_reward + final_score, 4)

@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -15,59 +16,60 @@ elif (ROOT_DIR / "default.env").exists():
 else:
     load_dotenv() # Fallback to standard search
 
+# Helper data for agent configuration
+_BUILT_IN_ROLES = ["INVESTIGATOR", "VALIDATOR", "FORENSIC_ANALYST", "NETWORK_ENGINEER", "SYSTEM_ADMIN", "SECURITY_ARCHITECT", "COMPLIANCE_OFFICER"]
+_DEFAULT_ROLES = ["INVESTIGATOR", "VALIDATOR", "FORENSIC_ANALYST", "NETWORK_ENGINEER"]
+
+def _build_agents_from_env():
+    import json
+    agents = []
+    suffix_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h': 7, 'i': 8, 'j': 9}
+    for suffix, idx in suffix_map.items():
+        model_key = f"AGENT_{suffix.upper()}_MODEL"
+        provider_key = f"AGENT_{suffix.upper()}_PROVIDER"
+        role_key = f"AGENT_{suffix.upper()}_ROLE"
+        prompt_key = f"AGENT_{suffix.upper()}_SYSTEM_PROMPT"
+        temp_key = f"AGENT_{suffix.upper()}_TEMPERATURE"
+        
+        model = os.getenv(model_key, "")
+        if model:
+            role_idx = idx % len(_DEFAULT_ROLES)
+            agents.append({
+                "id": f"agent_{suffix}",
+                "model": model,
+                "provider": os.getenv(provider_key, "ollama"),
+                "role": os.getenv(role_key, _DEFAULT_ROLES[role_idx]),
+                "system_prompt": os.getenv(prompt_key, ""),
+                "temperature": float(os.getenv(temp_key, str(0.7 - idx * 0.05)))
+            })
+    
+    if not agents:
+        agents = [
+            {
+                "id": "agent_a",
+                "model": os.getenv("AGENT_A_MODEL", "meta-llama/Llama-3.1-8B-Instruct"),
+                "provider": os.getenv("AGENT_A_PROVIDER", "hf"),
+                "role": "INVESTIGATOR",
+                "system_prompt": "",
+                "temperature": 0.7
+            },
+            {
+                "id": "agent_b",
+                "model": os.getenv("AGENT_B_MODEL", "meta-llama/Llama-3.2-1B-Instruct"),
+                "provider": os.getenv("AGENT_B_PROVIDER", "hf"),
+                "role": "VALIDATOR",
+                "system_prompt": "",
+                "temperature": 0.6
+            }
+        ]
+    return agents
+
 class Settings:
     # OLLAMA
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
     OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "ollama")
 
-    # AGENTS (Dynamic N-Agent Support - supports unlimited agents)
-    import json
-    _built_in_roles = ["INVESTIGATOR", "VALIDATOR", "FORENSIC_ANALYST", "NETWORK_ENGINEER", "SYSTEM_ADMIN", "SECURITY_ARCHITECT", "COMPLIANCE_OFFICER"]
-    _default_roles = ["INVESTIGATOR", "VALIDATOR", "FORENSIC_ANALYST", "NETWORK_ENGINEER"]
-    
-    def _build_agents_from_env():
-        agents = []
-        suffix_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5, 'g': 6, 'h': 7, 'i': 8, 'j': 9}
-        for suffix, idx in suffix_map.items():
-            model_key = f"AGENT_{suffix.upper()}_MODEL"
-            provider_key = f"AGENT_{suffix.upper()}_PROVIDER"
-            role_key = f"AGENT_{suffix.upper()}_ROLE"
-            prompt_key = f"AGENT_{suffix.upper()}_SYSTEM_PROMPT"
-            temp_key = f"AGENT_{suffix.upper()}_TEMPERATURE"
-            
-            model = os.getenv(model_key, "")
-            if model:
-                role_idx = idx % len(_default_roles)
-                agents.append({
-                    "id": f"agent_{suffix}",
-                    "model": model,
-                    "provider": os.getenv(provider_key, "ollama"),
-                    "role": os.getenv(role_key, _default_roles[role_idx]),
-                    "system_prompt": os.getenv(prompt_key, ""),
-                    "temperature": float(os.getenv(temp_key, str(0.7 - idx * 0.05)))
-                })
-        
-        if not agents:
-            agents = [
-                {
-                    "id": "agent_a",
-                    "model": os.getenv("AGENT_A_MODEL", "meta-llama/Llama-3.1-8B-Instruct"),
-                    "provider": os.getenv("AGENT_A_PROVIDER", "hf"),
-                    "role": "INVESTIGATOR",
-                    "system_prompt": "",
-                    "temperature": 0.7
-                },
-                {
-                    "id": "agent_b",
-                    "model": os.getenv("AGENT_B_MODEL", "meta-llama/Llama-3.2-1B-Instruct"),
-                    "provider": os.getenv("AGENT_B_PROVIDER", "hf"),
-                    "role": "VALIDATOR",
-                    "system_prompt": "",
-                    "temperature": 0.6
-                }
-            ]
-        return agents
-    
+    # AGENTS (Dynamic N-Agent Support)
     try:
         AGENTS_JSON = os.getenv("AGENTS_JSON")
         AGENTS = json.loads(AGENTS_JSON) if AGENTS_JSON else _build_agents_from_env()

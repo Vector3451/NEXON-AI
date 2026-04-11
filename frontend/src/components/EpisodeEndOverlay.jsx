@@ -9,18 +9,20 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
         const sc = gameState.scenario || {};
         const allAgents = gameState.agents || {};
         const allMessages = Object.values(allAgents).flatMap(a => a?.messages || []);
+        const unifiedSummary = generateUnifiedSummary();
 
         let report = `=================================================================\n`;
-        report += `                  NEXUS INCIDENT INVESTIGATION REPORT            \n`;
+        report += `           NEXUS INCIDENT INVESTIGATION REPORT              \n`;
         report += `=================================================================\n\n`;
 
         report += `[ SCENARIO METADATA ]\n`;
         report += `Title:           ${sc.id || 'N/A'}\n`;
         report += `Domain:          ${sc.domain || 'N/A'}\n`;
         report += `Difficulty:      ${sc.difficulty || 'N/A'}\n`;
-        report += `Final Grading Score: ${Number(gameState?.cumulativeReward || metrics?.score || 0).toFixed(4)} / 1.00\n`;
+        report += `Final Score:    ${Number(gameState?.cumulativeReward || metrics?.score || 0).toFixed(4)} / 1.00\n`;
         report += `Total Steps:     ${gameState?.step || metrics?.steps || 'N/A'}\n`;
-        report += `Active Agents:   ${Object.keys(allAgents).length}\n\n`;
+        report += `Active Agents:   ${Object.keys(allAgents).length}\n`;
+        report += `Status:          ${unifiedSummary?.isSuccess ? 'SUCCESS' : 'INCONCLUSIVE'}\n\n`;
         
         report += `[ AGENTS DEPLOYED ]\n`;
         Object.entries(allAgents).forEach(([agentId, agentData], idx) => {
@@ -30,6 +32,22 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
             report += `${idx + 1}. ${agentId}: ${msgCount} messages, ${toolCount} tool calls\n`;
         });
         report += `\n`;
+
+        // UNIFIED SUMMARY SECTION
+        if (unifiedSummary) {
+            report += `=================================================================\n`;
+            report += `[ UNIFIED INVESTIGATION SUMMARY ]\n`;
+            report += `=================================================================\n\n`;
+            
+            report += `## Combined Agent Conclusions\n`;
+            report += `${unifiedSummary.conclusionText || 'No conclusions recorded.'}\n\n`;
+            
+            report += `## Key Findings & Clues\n`;
+            report += `${unifiedSummary.keyFindings || 'None recorded.'}\n\n`;
+            
+            report += `## Key Tool Results\n`;
+            report += `${unifiedSummary.toolSummary}\n\n`;
+        }
         
         report += `[ STEP REWARDS ]\n`;
         if (gameState?.rewardHistory && gameState.rewardHistory.length > 0) {
@@ -37,7 +55,7 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
                 report += `Step ${i + 1}: ${r.toFixed(4)}\n`;
             });
             report += `Average: ${(gameState.rewardHistory.reduce((a, b) => a + b, 0) / gameState.rewardHistory.length).toFixed(4)}\n`;
-            report += `Final Grading Score: ${Number(gameState.cumulativeReward || 0).toFixed(4)}\n\n`;
+            report += `Final Score: ${Number(gameState.cumulativeReward || 0).toFixed(4)}\n\n`;
         } else {
             report += `No step rewards recorded.\n\n`;
         }
@@ -55,7 +73,7 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
 
         report += `[ CONTEXT & ROOT CAUSE ]\n`;
         report += `${sc.context || 'No context provided.'}\n`;
-        report += `Actual Root Cause Validation: ${metrics?.rootCause || 'N/A'}\n\n`;
+        report += `Root Cause Validation: ${metrics?.rootCause || 'N/A'}\n\n`;
 
         report += `=================================================================\n`;
         report += `[ INVESTIGATION LOG & DETAILED TRACE ]\n`;
@@ -84,40 +102,45 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
         }
         report += `\n`;
 
-        report += `> SYSTEMS ERRORS DETECTED DURING INVESTIGATION:\n`;
+        report += `> SYSTEMS ERRORS DETECTED:\n`;
         if (allErrors.length > 0) {
-            // deduplicate
             [...new Set(allErrors)].forEach(err => report += `${err}\n`);
         } else {
-            report += `No significant system errors found during tool execution.\n`;
+            report += `No significant system errors found.\n`;
         }
         report += `\n`;
 
         report += `=================================================================\n`;
-        report += `[ SOLUTION IMPLEMENTED & FIX VERIFICATION ]\n`;
+        report += `[ SOLUTION & FIX VERIFICATION ]\n`;
         report += `=================================================================\n\n`;
-        report += `The Validator Agent verified the proposed fix successfully, leading to the resolution of the incident.\n`;
-        report += `End-state: ${metrics?.rootCause === 'VERIFIED' ? 'SUCCESS' : 'UNKNOWN'}\n\n`;
+        
+        const resCall = gameState?.tool_calls_made?.find(c => c.tool_name === 'submit_resolution');
+        if (resCall?.params) {
+            report += `Root Cause Service: ${resCall.params.root_cause_service || 'UNKNOWN'}\n`;
+            report += `Root Cause Description: ${resCall.params.root_cause_description || 'None'}\n`;
+            report += `Fix Applied: ${resCall.params.fix_applied || 'None'}\n`;
+        } else {
+            report += `No resolution submitted.\n`;
+        }
+        report += `\n`;
 
         report += `=================================================================\n`;
-        report += `[ TIPS FOR IMPROVEMENT & RECOMMENDATIONS ]\n`;
+        report += `[ RECOMMENDATIONS ]\n`;
         report += `=================================================================\n\n`;
-        report += `Based on the automated evaluation of this scenario, consider the following:\n`;
 
         if (allTools.length > 15) {
-            report += `1. EFFICIENCY: The agents called a large number of tools (${allTools.length}). Consider refining the initial hypothesis to reduce blind querying.\n`;
+            report += `1. EFFICIENCY: ${allTools.length} tool calls made. Consider refining hypotheses.\n`;
         } else {
-            report += `1. EFFICIENCY: Tool execution was relatively concise (${allTools.length} calls).\n`;
+            report += `1. EFFICIENCY: Tool usage was concise (${allTools.length} calls).\n`;
         }
 
         if (allErrors.length > 5) {
-            report += `2. ACCURACY: Multiple tool execution errors were encountered. Ensure exact syntax and correct tool parameters are used to minimize invalid calls.\n`;
+            report += `2. ACCURACY: Multiple errors encountered. Verify tool syntax.\n`;
         }
 
-        report += `3. CAUSE-ANALYSIS: Always grep application error logs before querying databases to save time tracking downstream symptoms.\n`;
-        report += `4. REMEDIATION: Post-incident reviews should establish better automated alerting for the specific failure domain (${sc.domain || 'general'}).\n`;
+        report += `3. CAUSE-ANALYSIS: Check error logs before database queries.\n`;
+        report += `4. REMEDIATION: Establish better alerting for ${sc.domain || 'general'} domain.\n`;
 
-        // Trigger Download
         const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -129,6 +152,59 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
         URL.revokeObjectURL(url);
     };
 
+    const generateUnifiedSummary = () => {
+        const allAgents = gameState?.agents || {};
+        const agentEntries = Object.entries(allAgents);
+        
+        if (agentEntries.length === 0) return null;
+        
+        const allConclusions = [];
+        const allToolResults = [];
+        const allClues = gameState?.clues_found || [];
+        
+        agentEntries.forEach(([agentId, agentData]) => {
+            const msgs = agentData?.messages || [];
+            const textMsgs = msgs.filter(m => m.type === 'message');
+            const lastMsg = textMsgs[textMsgs.length - 1];
+            if (lastMsg) {
+                allConclusions.push({
+                    agentId,
+                    content: lastMsg.content || lastMsg.text || lastMsg.message || '',
+                    role: agentData.role || agentId
+                });
+            }
+            
+            const toolResults = msgs.filter(m => m.type === 'tool_result');
+            toolResults.forEach(tr => {
+                if (tr.result && !tr.result.toLowerCase().includes('error')) {
+                    allToolResults.push({
+                        agentId,
+                        tool: tr.tool_name || tr.tool,
+                        result: tr.result
+                    });
+                }
+            });
+        });
+        
+        const conclusionText = allConclusions.map(c => c.content).join('\n\n');
+        const keyFindings = allClues.slice(0, 5).join('\n• ');
+        const toolSummary = allToolResults.length > 0 
+            ? allToolResults.slice(0, 3).map(t => `• ${t.tool}: ${t.result.substring(0, 100)}...`).join('\n')
+            : 'No tool results recorded.';
+        
+        const isSuccess = Number(gameState?.cumulativeReward || metrics?.score || 0) >= 0.5;
+        
+        return {
+            conclusionText,
+            keyFindings: keyFindings || 'No clues recorded.',
+            toolSummary,
+            agentCount: agentEntries.length,
+            isSuccess
+        };
+    };
+    
+    const unifiedSummary = generateUnifiedSummary();
+
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-500">
             {/* Particle/Pulse Background */}
@@ -139,7 +215,7 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
             </div>
 
             {/* Summary Modal */}
-            <div className="relative w-full max-w-4xl max-h-[90vh] glass-panel rounded-xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.8)] border border-white/10 flex flex-col">
+            <div className="relative w-full max-w-5xl max-h-[90vh] glass-panel rounded-xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.8)] border border-white/10 flex flex-col">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between p-6 bg-surface-container-highest/20 border-b border-white/5">
                     <div className="flex items-center gap-3">
@@ -308,11 +384,9 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
                         }).filter(c => c.lastMsg);
                         
                         if (conclusions.length === 0) return null;
-                        
-                        const colors = ['primary', 'secondary', 'tertiary', 'error', 'success'];
 
                         return (
-                            <div className="px-8 pb-8">
+                            <div className="px-8 pb-4">
                                 <div className="p-6 bg-surface-container-low/40 border border-white/10 rounded-lg">
                                     <h3 className="font-headline font-bold text-on-surface tracking-widest uppercase mb-4 flex items-center gap-2">
                                         <span className="material-symbols-outlined">gavel</span>
@@ -336,6 +410,65 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
                             </div>
                         );
                     })()}
+
+                    {/* Unified Investigation Summary */}
+                    {unifiedSummary && (
+                        <div className="px-8 pb-8">
+                            <div className="p-6 bg-gradient-to-br from-primary/5 to-secondary/5 border border-primary/20 rounded-lg">
+                                <h3 className="font-headline font-bold text-primary tracking-widest uppercase mb-4 flex items-center gap-2">
+                                    <span className="material-symbols-outlined">psychology</span>
+                                    Unified Investigation Summary
+                                </h3>
+                                
+                                {/* Success/Failure Badge */}
+                                <div className="mb-4">
+                                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase ${
+                                        unifiedSummary.isSuccess 
+                                            ? 'bg-tertiary/20 text-tertiary border border-tertiary/30' 
+                                            : 'bg-error/20 text-error border border-error/30'
+                                    }`}>
+                                        <span className={`w-2 h-2 rounded-full ${unifiedSummary.isSuccess ? 'bg-tertiary' : 'bg-error'}`}></span>
+                                        {unifiedSummary.isSuccess ? 'Investigation Successful' : 'Investigation Inconclusive'}
+                                    </span>
+                                    <span className="ml-3 text-[10px] text-outline font-mono uppercase">
+                                        {unifiedSummary.agentCount} Agents Collaborated
+                                    </span>
+                                </div>
+
+                                {/* Combined Conclusions */}
+                                <div className="mb-4">
+                                    <span className="font-mono text-[10px] text-primary/60 uppercase tracking-widest block mb-2">Combined Agent Conclusions</span>
+                                    <div className="p-4 bg-surface-container-low/50 rounded border border-white/5 max-h-48 overflow-y-auto custom-scrollbar">
+                                        <p className="text-sm text-on-surface/90 leading-relaxed whitespace-pre-wrap">
+                                            {unifiedSummary.conclusionText || 'No conclusions recorded.'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Key Findings */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <span className="font-mono text-[10px] text-secondary/60 uppercase tracking-widest block mb-2">Key Findings & Clues</span>
+                                        <div className="p-3 bg-surface-container-low/50 rounded border border-white/5">
+                                            <ul className="text-xs text-on-surface/80 space-y-1 list-disc list-inside">
+                                                {unifiedSummary.keyFindings.split('\n• ').map((finding, i) => (
+                                                    finding && <li key={i}>{finding}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="font-mono text-[10px] text-tertiary/60 uppercase tracking-widest block mb-2">Key Tool Results</span>
+                                        <div className="p-3 bg-surface-container-low/50 rounded border border-white/5 max-h-32 overflow-y-auto custom-scrollbar">
+                                            <pre className="text-[10px] text-on-surface/70 whitespace-pre-wrap font-mono">
+                                                {unifiedSummary.toolSummary}
+                                            </pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Modal Footer */}

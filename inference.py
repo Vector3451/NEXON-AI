@@ -116,8 +116,8 @@ def run():
             obs = asyncio.run(env.reset(task=task["name"], seed=42))
         except Exception as e:
             err = _safe_error(f"reset failed: {str(e)}")
-            _print(f"[STEP] step=1 action=reset_attempted reward=0.00 done=true error={err}")
-            _print("[END] success=false steps=1 rewards=0.00")
+            _print(f"[STEP] step=1 action=reset_attempted reward=0.01 done=true error={err}")
+            _print("[END] success=false steps=1 rewards=0.01")
             continue
 
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -147,8 +147,8 @@ def run():
                 action_text = resp.choices[0].message.content or ""
             except Exception as e:
                 last_error = _safe_error(str(e))
-                rewards_str = ",".join(f"{r:.2f}" for r in rewards) if rewards else "0.00"
-                _print(f"[STEP] step={step_n} action=llm_call_failed reward=0.00 done=true error={last_error}")
+                rewards_str = ",".join(f"{r:.2f}" for r in rewards) if rewards else "0.01"
+                _print(f"[STEP] step={step_n} action=llm_call_failed reward=0.01 done=true error={last_error}")
                 _print(f"[END] success=false steps={step_n} rewards={rewards_str}")
                 break
 
@@ -168,8 +168,8 @@ def run():
                 obs, reward, done, info = asyncio.run(env.step(action))
             except Exception as e:
                 last_error = _safe_error(str(e))
-                rewards_str = ",".join(f"{r:.2f}" for r in rewards) if rewards else "0.00"
-                _print(f"[STEP] step={step_n} action={_safe_action(action_text)} reward=0.00 done=true error={last_error}")
+                rewards_str = ",".join(f"{r:.2f}" for r in rewards) if rewards else "0.01"
+                _print(f"[STEP] step={step_n} action={_safe_action(action_text)} reward=0.01 done=true error={last_error}")
                 _print(f"[END] success=false steps={step_n} rewards={rewards_str}")
                 break
 
@@ -181,13 +181,15 @@ def run():
             action_str = _safe_action(action_text)
             _print(
                 f"[STEP] step={step_n} action={action_str} "
-                f"reward={reward:.2f} done={str(done).lower()} error={last_error}"
+                f"reward={clamped_reward:.2f} done={str(done).lower()} error={last_error}"
             )
         else:
             # Normal loop completion — emit [END]
-            final_score = info.get("final_score", rewards[-1] if rewards else 0.0) if rewards else 0.0
+            final_score = info.get("final_score", rewards[-1] if rewards else 0.01) if rewards else 0.01
+            # Ensure final_score is strictly between 0 and 1
+            final_score = max(0.001, min(0.999, final_score))
             success = final_score >= 0.5
-            rewards_str = ",".join(f"{r:.2f}" for r in rewards) if rewards else "0.00"
+            rewards_str = ",".join(f"{r:.2f}" for r in rewards) if rewards else "0.01"
             _print(f"[END] success={str(success).lower()} steps={step_n} rewards={rewards_str}")
 
     # Always close
@@ -202,5 +204,5 @@ if __name__ == "__main__":
         run()
     except Exception as e:
         # Even on fatal error, emit a valid [END] if possible
-        print(f"[END] success=false steps=0 rewards=0.00", flush=True)
+        print(f"[END] success=false steps=0 rewards=0.01", flush=True)
         sys.exit(1)

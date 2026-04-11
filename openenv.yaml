@@ -1,11 +1,11 @@
 name: nexus-incident-investigation
 version: "1.0.0"
-tags: ["openenv"]
+tags: ["openenv", "multi-agent"]
 description: >
-  NEXUS — Dual Agent Incident Investigation Environment.
-  Two AI agents collaborate to investigate real-world system incidents.
-  Agent A (Investigator) proposes hypotheses and calls tools.
-  Agent B (Validator) challenges claims and verifies fixes.
+  NEXUS — Multi-Agent Incident Investigation Environment.
+  Multiple AI agents (up to 10) collaborate to investigate real-world system incidents.
+  Agents can take different roles: Investigator, Validator, Forensic Analyst,
+  Network Engineer, System Admin, Security Architect, and Compliance Officer.
   Together they identify root causes across software, business-process,
   and cascade-system failure scenarios.
 
@@ -30,7 +30,7 @@ tasks:
 
 action_space:
   type: text
-  description: Free-form natural language message with optional TOOL: calls
+  description: "Free-form natural language message with optional TOOL: calls"
 
 observation_space:
   type: structured

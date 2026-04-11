@@ -8,7 +8,6 @@ version = "1.0.0"
 description = "NEXUS - Dual Agent Incident Investigation Environment"
 requires-python = ">=3.10"
 dependencies = [
-    "openenv-core>=0.2.0",
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.23.0",
     "pydantic>=2.0.0",

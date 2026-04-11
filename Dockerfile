@@ -4,10 +4,14 @@ WORKDIR /app/frontend
 
 # Copy package files first for better caching
 COPY frontend/package*.json ./
-RUN npm install
+
+# Install dependencies
+RUN npm install --legacy-peer-deps
 
 # Copy frontend source
 COPY frontend/ ./
+
+# Build frontend
 RUN npm run build
 
 # Stage 2: Python backend

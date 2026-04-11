@@ -239,24 +239,24 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
                                 
                                 return (
                                     <div key={agentId} className="relative group">
-                                        <div className={`absolute -left-4 top-0 bottom-0 w-1 bg-${color} shadow-[0_0_8px_rgba(var(--${color}),0.4)]`}></div>
+                                        <div className={`absolute -left-4 top-0 bottom-0 w-1 ${idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-secondary' : idx === 2 ? 'bg-tertiary' : 'bg-error'}`}></div>
                                         <div className="bg-surface-container-low/40 p-5 space-y-4 border border-white/5 rounded-r-lg">
                                             <div className="flex justify-between items-center">
-                                                <span className={`font-headline font-bold text-${color} tracking-tighter uppercase`}>Agent_{agentName}</span>
-                                                <span className={`font-mono text-[10px] text-${color}/50`}>{agentId.toUpperCase()}</span>
+                                                <span className={`font-headline font-bold tracking-tighter uppercase ${idx === 0 ? 'text-primary' : idx === 1 ? 'text-secondary' : idx === 2 ? 'text-tertiary' : 'text-error'}`}>Agent_{agentName}</span>
+                                                <span className={`font-mono text-[10px] ${idx === 0 ? 'text-primary' : idx === 1 ? 'text-secondary' : idx === 2 ? 'text-tertiary' : 'text-error'}/50`}>{agentId.toUpperCase()}</span>
                                             </div>
                                             <div className="grid grid-cols-3 gap-2 text-center">
                                                 <div>
                                                     <span className="font-mono text-[9px] text-outline flex flex-col items-center justify-center gap-1 uppercase"><span className="material-symbols-outlined text-[12px]">chat</span> MSGS</span>
-                                                    <span className={`font-headline text-lg font-medium text-${color}`}>{msgCount}</span>
+                                                    <span className={`font-headline text-lg font-medium ${idx === 0 ? 'text-primary' : idx === 1 ? 'text-secondary' : idx === 2 ? 'text-tertiary' : 'text-error'}`}>{msgCount}</span>
                                                 </div>
                                                 <div className="border-x border-white/5">
                                                     <span className="font-mono text-[9px] text-outline flex flex-col items-center justify-center gap-1 uppercase"><span className="material-symbols-outlined text-[12px]">build</span> TOOLS</span>
-                                                    <span className={`font-headline text-lg font-medium text-${color}`}>{toolCount}</span>
+                                                    <span className={`font-headline text-lg font-medium ${idx === 0 ? 'text-primary' : idx === 1 ? 'text-secondary' : idx === 2 ? 'text-tertiary' : 'text-error'}`}>{toolCount}</span>
                                                 </div>
                                                 <div>
                                                     <span className="font-mono text-[9px] text-outline flex flex-col items-center justify-center gap-1 uppercase"><span className="material-symbols-outlined text-[12px]">warning</span> ERRS</span>
-                                                    <span className={`font-headline text-lg font-medium text-${color}`}>{errCount}</span>
+                                                    <span className={`font-headline text-lg font-medium ${idx === 0 ? 'text-primary' : idx === 1 ? 'text-secondary' : idx === 2 ? 'text-tertiary' : 'text-error'}`}>{errCount}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -320,11 +320,13 @@ const EpisodeEndOverlay = ({ isOpen, onClose, metrics, gameState }) => {
                                     </h3>
                                     <div className="space-y-4">
                                         {conclusions.map(({ agentId, lastMsg }, idx) => {
-                                            const color = colors[idx % colors.length];
                                             const agentNames = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO'];
+                                            const colorClass = idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-secondary' : idx === 2 ? 'bg-tertiary' : 'bg-error';
+                                            const borderClass = idx === 0 ? 'border-primary' : idx === 1 ? 'border-secondary' : idx === 2 ? 'border-tertiary' : 'border-error';
+                                            const textClass = idx === 0 ? 'text-primary' : idx === 1 ? 'text-secondary' : idx === 2 ? 'text-tertiary' : 'text-error';
                                             return (
-                                                <div key={agentId} className={`p-4 bg-${color}/5 border-l-2 border-${color} rounded-r`}>
-                                                    <span className={`font-mono text-[10px] text-${color} uppercase block mb-1 tracking-widest`}>Agent {agentNames[idx % agentNames.length]} ({agentId}) Conclusion</span>
+                                                <div key={agentId} className={`p-4 ${colorClass}/10 border-l-2 ${borderClass} rounded-r`}>
+                                                    <span className={`font-mono text-[10px] ${textClass} uppercase block mb-1 tracking-widest`}>Agent {agentNames[idx % agentNames.length]} ({agentId}) Conclusion</span>
                                                     <p className="text-sm text-on-surface/90 leading-relaxed">{lastMsg.content || lastMsg.text || lastMsg.message}</p>
                                                 </div>
                                             );

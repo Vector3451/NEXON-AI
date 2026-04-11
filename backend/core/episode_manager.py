@@ -34,8 +34,7 @@ class EpisodeManager:
                 "scenario": sc_safe,
                 "task": task,
                 "difficulty": self.env.active_episode.difficulty,
-                "agent_a_model": settings.AGENT_A_MODEL,
-                "agent_b_model": settings.AGENT_B_MODEL
+                "agents": getattr(settings, "AGENTS", [])
             })
         return obs
 

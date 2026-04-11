@@ -213,6 +213,7 @@ const SettingsView = () => {
         fetchConfig();
     }, []);
 
+    const handleSave = async () => {
         try {
             const agentPayload = agents.map(a => ({
                 id: a.id,
